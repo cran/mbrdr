@@ -1,0 +1,27 @@
+importFrom("stats","cov", "kmeans", "model.extract", "model.matrix", "na.fail", "pchisq")
+
+export(mbrdr)
+export(mbrdr.compute)
+export(mbrdr.x)
+export(mbrdr.y)
+
+export(choose.fx)
+export(matpower)
+export(SIGMAS)
+
+S3method(mbrdr.y, default)
+S3method(mbrdr.y, name)
+
+S3method(mbrdr.fit, default)
+S3method(mbrdr.M, prr)
+S3method(mbrdr.M, pfrr)
+S3method(mbrdr.M, upfrr)
+S3method(mbrdr.M, yc)
+
+S3method(mbrdr.test, default)
+S3method(mbrdr.test, pfrr)
+S3method(mbrdr.test, upfrr)
+
+S3method(print, mbrdr)
+S3method(print, summary.mbrdr)
+S3method(summary, mbrdr)

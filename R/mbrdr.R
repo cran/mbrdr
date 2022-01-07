@@ -39,7 +39,7 @@ mbrdr <- function(formula, data, subset, na.action=na.fail, weights, ...){
 }
 
 
-mbrdr.compute <- function(y, x, weights, method="upfrr", ...){
+mbrdr.compute <- function(y, x, weights, method="upfrr",...){
     if (NROW(y) != nrow(x))     #check lengths
         stop("The response and predictors have differing number of observations")
 
@@ -67,13 +67,14 @@ mbrdr.y.name <- function(object) {object$y.name}
 #####################################################################
 #     Fitting function
 #####################################################################
-mbrdr.fit <- function(object, numdir=4,  fx.choice=1, fx=NULL, nclust=5,...) UseMethod("mbrdr.fit")
+mbrdr.fit <- function(object, numdir=4,...) UseMethod("mbrdr.fit")
 
-mbrdr.fit.default <-function(object, numdir=4, fx.choice=1,fx=NULL, nclust=5,...){
+mbrdr.fit.default <-function(object, numdir=4,...){
     M <-mbrdr.M(object, ...)  # Get the kernel matrix M, method specific
     evalues <- M$evalues
     evectors <- as.matrix(M$M)
     numdir <- min( M$numdir, dim(evectors)[2] )
+
     stats <- M$stats
     if (is.null(M$fx)) {fx <- NULL}
       else{ fx <- M$fx}
@@ -151,11 +152,11 @@ mbrdr.M.prr <- function(object, num.d=NULL,...) {
 #####################################################################
 #     Principal Fitted Response Reduction (PFRR)
 #####################################################################
-mbrdr.M.pfrr <- function(object, num.d=NULL, fx.choice=1, nclust=5, fx=NULL,...) {
+mbrdr.M.pfrr <- function(object, num.d=NULL, fx.choice=NULL, nclust=NULL, fx=NULL,...) {
 
-####################
-## Inner functions begin
-####################
+  ####################
+  ## Inner functions begin
+  ####################
   lik <- function(h, S, S_res, n) {
     p <- dim(as.matrix(h))[1]; d <- dim(as.matrix(h))[2]
     h <- eigen(h %*% t(h))$vectors[, 1:d]
@@ -164,68 +165,72 @@ mbrdr.M.pfrr <- function(object, num.d=NULL, fx.choice=1, nclust=5, fx=NULL,...)
     return(lik)}
 
   seq.dir <- function(cand_mat, d=1, S, S_res, n){
-   h <- h1 <- NULL
-   r <- dim(cand_mat)[2]
-   f.lik <- -(n/2)*log(det(S_res))
-   for (i in 1:d){
-     l.lik <- NULL
+    h <- h1 <- NULL
+    r <- dim(cand_mat)[2]
+    f.lik <- -(n/2)*log(det(S_res))
+    for (i in 1:d){
+      l.lik <- NULL
       for(j in 1:r){
         l.lik[j] <- lik(cbind(h1, cand_mat[,j]), S, S_res, n)
       }
-    stat <- 2*(f.lik - l.lik)
-    sel <- which(stat >= 0 ); l.lik <- l.lik[sel]; stat <- stat[sel]
-    cand_mat <- cand_mat[, sel]
-    h <- cbind(h,cand_mat[,which.max(l.lik)])
-    h1 <- h
-    cand_mat <- cand_mat[, -(which.max(l.lik))]
-    r <- length(sel)-1
+      stat <- 2*(f.lik - l.lik)
+      sel <- which(stat >= 0 ); l.lik <- l.lik[sel]; stat <- stat[sel]
+      cand_mat <- cand_mat[, sel]
+      h <- cbind(h,cand_mat[,which.max(l.lik)])
+      h1 <- h
+      cand_mat <- cand_mat[, -(which.max(l.lik))]
+      r <- length(sel)-1
     }
     out <- list(dir=h, loglik=max(l.lik), stat=min(stat) )
     return(out)}
-####################
-## Inner functions end
-####################
+  ####################
+  ## Inner functions end
+  ####################
 
- y <- mbrdr.y(object)
- x <- mbrdr.x(object)
+  y <- mbrdr.y(object)
+  x <- mbrdr.x(object)
 
- n <- dim(y)[1]
- r <- dim(y)[2]
+  n <- dim(y)[1]
+  r <- dim(y)[2]
 
- if (is.null(num.d) ) num.d <- (r-1)
+  if (is.null(num.d) ) num.d <- (r-1)
 
- if (fx.choice>4 & is.null(fx)) stop("fx.choice must be less than or equal to 4. If you want to other candidates for fx, use the fx option") else {
-      if (!is.null(fx)) fx=fx else fx <- choose.fx(x, fx.choice=fx.choice, nclust=nclust)}
+  num.f <- {if(is.null(fx.choice)) 1 else fx.choice}
+  h <- {if(is.null(nclust)) 5 else nclust}
 
- Sigmas<-SIGMAS(y, fx)
- Sigmahat <- Sigmas$Sigmahat
- Sigmahat_fit<-Sigmas$Sigmahat_fit
- Sigmahat_res<-Sigmas$Sigmahat_res
+  if(num.f>4 & is.null(fx)) stop("fx.choice must be less than or equal to 4. If you want to other candidates for fx, use the fx option") else {
+    if(!is.null(fx)) fx<-fx else fx <- choose.fx(x, fx.choice=num.f, nclust=h)}
 
- eg_S<- eigen(Sigmahat);   ev_S <- eg_S$vectors
- eg_fit <- eigen(Sigmahat_fit);  ev_fit <- eg_fit$vectors
- eg_res <- eigen(Sigmahat_res);  ev_res <- eg_res$vectors
+  Sigmas<-SIGMAS(y, fx)
+  Sigmahat <- Sigmas$Sigmahat
+  Sigmahat_fit<-Sigmas$Sigmahat_fit
+  Sigmahat_res<-Sigmas$Sigmahat_res
 
- cand <- cbind(ev_fit, ev_S, ev_res)
+  eg_S<- eigen(Sigmahat);   ev_S <- eg_S$vectors
+  eg_fit <- eigen(Sigmahat_fit);  ev_fit <- eg_fit$vectors
+  eg_res <- eigen(Sigmahat_res);  ev_res <- eg_res$vectors
 
- logliks <- NULL
- for (i in 1:num.d ){
-   logliks[i] <- seq.dir(cand, d=i, S=Sigmahat, S_res=Sigmahat_res, n=n)$loglik
+  cand <- cbind(ev_fit, ev_S, ev_res)
+
+  logliks <- NULL
+  for (i in 1:num.d ){
+    logliks[i] <- seq.dir(cand, d=i, S=Sigmahat, S_res=Sigmahat_res, n=n)$loglik
   }
 
- evectors <- seq.dir(cand, d=num.d, S=Sigmahat, S_res=Sigmahat_res, n=n)$dir
- evectors <- qr.Q( qr(evectors) )
+  evectors <- seq.dir(cand, d=num.d, S=Sigmahat, S_res=Sigmahat_res, n=n)$dir
+  evectors <- qr.Q( qr(evectors) )
 
- evalues <- c((-(n/2)*log(det(Sigmahat))), logliks)
+  evalues <- c((-(n/2)*log(det(Sigmahat))), logliks)
 
- full.loglik <- (-(n/2)*log(det(Sigmahat_res)))
- stat <- 2*(full.loglik  - evalues )
+  full.loglik <- (-(n/2)*log(det(Sigmahat_res)))
+  stat <- 2*(full.loglik  - evalues )
 
 
 
- ans <- list(M=evectors, stats=stat, evalues=evalues, fx=fx, numdir=num.d)
- return(ans)
+  ans <- list(M=evectors, stats=stat, evalues=evalues, fx=fx, numdir=num.d)
+  return(ans)
 }
+
 
 ###################################################################
 #  LRT functions
@@ -255,7 +260,7 @@ mbrdr.test.pfrr <-function(object, nd) {
 #     UnStructured Principal Fitted Response Reduction (UPFRR)
 #####################################################################
 
-mbrdr.M.upfrr <- function(object, num.d=NULL, fx.choice=1, nclust=5, fx=NULL, epsilon=1e-7,...) {
+mbrdr.M.upfrr <- function(object, num.d=NULL, fx.choice=NULL, fx=NULL, nclust=NULL, epsilon=1e-7,...) {
 
 #####################################################################
 # UPFRR function
@@ -314,8 +319,11 @@ mbrdr.M.upfrr <- function(object, num.d=NULL, fx.choice=1, nclust=5, fx=NULL, ep
 
  if (is.null(num.d) ) num.d <- (r-1)
 
- if (fx.choice>4 & is.null(fx)) stop("fx.choice must be less than or equal to 4. If you want to other candidates for fx, use the fx option") else {
-      if (!is.null(fx)) fx=fx else fx <- choose.fx(x, fx.choice=fx.choice, nclust=nclust)}
+ num.f <- {if(is.null(fx.choice)) 1 else fx.choice}
+ h <- {if(is.null(nclust)) 5 else nclust}
+
+ if(num.f>4 & is.null(fx)) stop("fx.choice must be less than or equal to 4. If you want to other candidates for fx, use the fx option") else {
+   if(!is.null(fx)) fx<-fx else fx <- choose.fx(x, fx.choice=num.f, nclust=h)}
 
  logliks <- NULL
  Gammahats <- list(NULL)
@@ -448,10 +456,10 @@ choose.fx = function(X, fx.choice=1, nclust=5){
     for (i in 1:r){ fy[i,]<-sapply(y, function(x) (x==bin.y[i]) ) }
    return(fy);
   }
-  Xc <- scale(X, scale=F)
-  if (fx.choice==1) {fx = Xc}
-  if (fx.choice==2) {fx = cbind(Xc, Xc^2)}
-  if (fx.choice==3) {fx = cbind(Xc, exp(Xc))}
+
+  if (fx.choice==1) {fx = scale(X)}
+  if (fx.choice==2) {fx = cbind(scale(X), scale(X^2))}
+  if (fx.choice==3) {fx = cbind(scale(X), scale(exp(X)))}
   if (fx.choice==4) {slice = kmeans(X, nclust)$clust; fx=t(CategoricalBasis(slice))}
   if (fx.choice >4) {fx= NULL}
 return(fx)

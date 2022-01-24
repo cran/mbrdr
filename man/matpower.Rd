@@ -24,4 +24,3 @@ X <- matrix(rnorm(100), c(20,5))
 matpower(cov(X), -0.5) ## returns cov(X)^-0.5 %*% cov(X)^-0.5 = cov(X)^-1.
  }
 
-\keyword{ internal }

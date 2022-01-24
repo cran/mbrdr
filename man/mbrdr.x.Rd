@@ -25,4 +25,3 @@ returns the response vector/matrix.
 
 \seealso{  \code{\link{mbrdr}}. }
 
-\keyword{internal}% at least one, from doc/KEYWORDS

@@ -45,4 +45,3 @@ choose.fx(X, fx.choice=2)
 choose.fx(X, fx.choice=4, nclust=3)
 }
 
-\keyword{ internal }

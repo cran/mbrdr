@@ -4,7 +4,6 @@ export(mbrdr)
 export(mbrdr.compute)
 export(mbrdr.x)
 export(mbrdr.y)
-
 export(choose.fx)
 export(matpower)
 export(SIGMAS)

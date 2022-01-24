@@ -54,4 +54,4 @@ data(mps)
 pairs(mps[,1:4])
 }
 
-\keyword{ internal }
+

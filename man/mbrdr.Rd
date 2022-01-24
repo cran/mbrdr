@@ -65,6 +65,18 @@ chi-squared test results for estimating \eqn{d} is provided.
 
 Weights can be used, essentially to specify the relative
 frequency of each case in the data.
+
+The option \code{fx.choice} is required to fit \code{"pfrr"} and \code{"upfrr"} and has the following four values.
+
+\code{fx.choice=1}: This is default and returns the original predictor matrice X, centered at zero as fx.
+
+\code{fx.choice=2}: This returns the original predictor matrice X, centered at zero and its squared values.
+
+\code{fx.choice=3}: This returns the original predictor matrice X, centered at zero and its exponentiated values.
+
+\code{fx.choice=4}: This clusters X with K-means algoritm with the number of clusters equal to the value in \code{nclust}.
+Then, the cluster results are expanded to \eqn{\code{nclust}-1} dummy variables, like factor used in \code{lm} function. Finally, it returns \code{nclust-1} categorical basis. The option of \code{nclust} works only with \code{fx.choice=4}.
+
 }
 
 \value{

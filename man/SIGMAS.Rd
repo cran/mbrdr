@@ -36,4 +36,3 @@ SIGMAS(Y, fx1)
 SIGMAS(Y, fx2)
 }
 
-\keyword{ internal }
